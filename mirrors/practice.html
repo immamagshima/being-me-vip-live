@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="he" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>מראות | תרגול בחדרים</title>
+<style>
+*{box-sizing:border-box}body{margin:auto;max-width:640px;padding:20px;background:#f8f0e5;color:#232546;font:18px/1.55 Arial,sans-serif}h1{margin:.1em 0 .5em}h2{margin:.5em 0}nav, .actions{display:flex;flex-wrap:wrap;gap:8px}button{font:inherit;color:inherit;background:#fffaf3;border:1px solid #696685;border-radius:5px;min-height:46px;padding:8px 12px;cursor:pointer}button[aria-pressed=true],#start{background:#263ba0;color:white}button:disabled{opacity:.5}button:focus-visible{outline:3px solid #9c214b;outline-offset:3px}ol{padding-inline-start:24px}li{margin:.3em 0}#clock{font-size:clamp(54px,18vw,88px);line-height:1.1;font-variant-numeric:tabular-nums;display:block;color:#263ba0}#cue{margin:.25em 0}.timer{background:#fffaf3;border-inline-start:4px solid #9c214b;padding:12px;margin-block:16px}
+</style>
+<main>
+<h1>מראות · תרגול בחדרים</h1>
+<nav aria-label="בחירת תרגול"><button id="pairs" type="button">זוגות</button><button id="triples" type="button">שלישיות</button></nav>
+<h2 id="title"></h2><ol id="steps"></ol>
+<section class="timer" aria-label="טיימר לתרגול"><p id="cue" role="status"></p><b id="clock" dir="ltr" role="timer"></b></section>
+<div class="actions"><button id="start" type="button">להתחיל</button><button id="next" type="button">להחליף תפקידים</button><button id="reset" type="button">לאפס</button></div>
+<p>אחת בכל חדר מפעילה את הטיימר.</p>
+</main>
+<script>
+const exercises=[
+ {title:'מראות בזוגות',seconds:600,turns:2,steps:['המספרת משתפת בחירה קטנה שעשתה השבוע.','המקשיבה אומרת מה שמעה ומה התעורר בה.','המספרת מחזירה משפט אחד של המקשיבה, כלשונו.','עוצרות רגע. המקשיבה אומרת מה היא מזהה בעצמה, אם תרצה.']},
+ {title:'מראה הפוכה בשלישיות',seconds:240,turns:3,steps:['המביאה מנסה לומר בגוף ראשון משפט שאמרה על האחרת.','המשקפת מחזירה אותו במילים המדויקות.','העדה מציינת מילה או הפסקה ששמעה.','המביאה בוחרת מה מתאים לה לקחת. בתור הבא כל אחת עוברת לתפקיד הבא.']}
+];
+const $=id=>document.getElementById(id);
+let index=0,turn=1,remaining=600,end=0;
+function draw(){
+ const ex=exercises[index];
+ if(end&&Date.now()>=end){end=0;remaining=0;}
+ const t=end?Math.ceil((end-Date.now())/1000):remaining;
+ $('clock').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+ const cue=t===0?(turn<ex.turns?'מחליפות תפקידים':'סיימנו. רגע אחד יחד.'):'תור '+turn+' מתוך '+ex.turns;
+ if($('cue').textContent!==cue)$('cue').textContent=cue;
+ $('start').textContent=end?'להשהות':remaining===ex.seconds?'להתחיל':'להמשיך';
+ $('start').disabled=t===0;
+ $('next').disabled=turn>=ex.turns;
+}
+function select(i){
+ index=i;turn=1;remaining=exercises[i].seconds;end=0;
+ $('title').textContent=exercises[i].title;
+ $('steps').replaceChildren(...exercises[i].steps.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
+ $('pairs').setAttribute('aria-pressed',String(i===0));$('triples').setAttribute('aria-pressed',String(i===1));draw();
+}
+$('pairs').onclick=()=>{if(index!==0)select(0);};$('triples').onclick=()=>{if(index!==1)select(1);};
+$('start').onclick=()=>{if(end){remaining=Math.max(0,Math.ceil((end-Date.now())/1000));end=0;}else if(remaining)end=Date.now()+remaining*1000;draw();};
+$('next').onclick=()=>{if(turn<exercises[index].turns){turn++;end=0;remaining=exercises[index].seconds;draw();}};
+$('reset').onclick=()=>select(index);
+select(0);setInterval(draw,200);
+</script></html>
